@@ -47,6 +47,7 @@ type ServerSSLProfile struct {
 	CacheTimeout                 int         `json:"cacheTimeout,omitempty"`
 	Cert                         string      `json:"cert,omitempty"`
 	Chain                        string      `json:"chain,omitempty"`
+	CipherGroup                  string      `json:"cipherGroup,omitempty"`
 	Ciphers                      string      `json:"ciphers,omitempty"`
 	DefaultsFrom                 string      `json:"defaultsFrom,omitempty"`
 	ExpireCertResponseControl    string      `json:"expireCertResponseControl,omitempty"`
@@ -117,6 +118,7 @@ type ClientSSLProfile struct {
 	CertLifespan                    int         `json:"certLifespan,omitempty"`
 	CertLookupByIpaddrPort          string      `json:"certLookupByIpaddrPort,omitempty"`
 	Chain                           string      `json:"chain,omitempty"`
+	CipherGroup                     string      `json:"cipherGroup,omitempty"`
 	Ciphers                         string      `json:"ciphers,omitempty"`
 	ClientCertCa                    string      `json:"clientCertCa,omitempty"`
 	CrlFile                         string      `json:"crlFile,omitempty"`
@@ -152,6 +154,18 @@ type ClientSSLProfile struct {
 	SslSignHash                     string      `json:"sslSignHash,omitempty"`
 	StrictResume                    string      `json:"strictResume,omitempty"`
 	UncleanShutdown                 string      `json:"uncleanShutdown,omitempty"`
+}
+
+// CipherGroups contains a list of every Cipher Group on the BIG-IP system
+type CipherGroups struct {
+	CipherGroups []CipherGroup `json:"items"`
+}
+
+// CipherGroup contains information about each individual cipher group
+type CipherGroup struct {
+	Name      string `json:"name,omitempty"`
+	Partition string `json:"partition,omitempty"`
+	FullPath  string `json:"fullPath,omitempty"`
 }
 
 // Nodes contains a list of every node on the BIG-IP system.
@@ -1917,6 +1931,8 @@ const (
 	uriSSL            = "ssl"
 	uriUniversal      = "universal"
 	uriCreateDraft    = "?options=create-draft"
+	uriCipher         = "cipher"
+	uriCipherGroup    = "group"
 )
 
 var cidr = map[string]string{
@@ -2005,6 +2021,32 @@ func (b *BigIP) DeleteSnatPool(name string) error {
 // can be modified are referenced in the Snatpool struct.
 func (b *BigIP) ModifySnatPool(name string, config *SnatPool) error {
 	return b.put(config, uriLtm, uriSnatPool, name)
+}
+
+// CipherGroups returns a list of CipherGroups.
+func (b *BigIP) CipherGroups() (*CipherGroups, error) {
+	var cipherGroups CipherGroups
+	err, _ := b.getForEntity(&cipherGroups, uriLtm, uriCipher, uriCipherGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cipherGroups, nil
+}
+
+
+// GetCipherGroup gets a cipher group by name. Returns nil if the cipher group does not exist
+func (b *BigIP) GetCipherGroup(name string) (*CipherGroup, error) {
+	var cipherGroup CipherGroup
+	err, ok := b.getForEntity(&cipherGroup, uriLtm, uriCipher, uriCipherGroup, name)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, nil
+	}
+
+	return &cipherGroup, nil
 }
 
 // ServerSSLProfiles returns a list of server-ssl profiles.

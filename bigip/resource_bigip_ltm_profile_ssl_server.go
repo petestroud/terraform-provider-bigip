@@ -187,6 +187,13 @@ func resourceBigipLtmProfileServerSsl() *schema.Resource {
 				Description: "Client Certificate Constrained Delegation CA passphrase",
 			},
 
+			"cipher_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "BigIP Cipher Group.",
+			},
+
 			"ciphers": {
 				Type:        schema.TypeString,
 				Optional:    true,
